@@ -33,7 +33,7 @@ It checks the packed attestation signature, the attestation certificate (not a C
 
 ## Pilot: the GitHub Action
 
-`.github/workflows/backed.yml` runs `backed-action.js` whenever a PR is opened or pushed to, or a PR comment is posted or edited. It looks for a `backed` code block in the PR's comments and, if one is valid for the PR's current head commit, sets a `backed` commit status and adds a `backed` label. That's the Phase 1 label-only policy: nothing is closed or blocked. A new push removes the label until the contributor signs again. A bundle that targets the current head but fails gets a `failure` status with the reason, so the contributor can see what's wrong.
+`.github/workflows/backed.yml` runs `backed-action.js` whenever a PR is opened or pushed to, or a PR comment is posted or edited. It looks for a `backed` code block in the PR's comments and, if one is valid for the PR's current head commit, sets a `backed` commit status and adds a `backed` label. That's the Phase 1 label-only policy: nothing is closed or blocked. A new push removes the label until the contributor signs again. The workflow's own check, `backed-action / evaluate`, only shows that the Action ran; the `backed` status and label are the result. A bundle that targets the current head but fails gets a `failure` status with the reason, so the contributor can see what's wrong.
 
 A bundle counts only if:
 

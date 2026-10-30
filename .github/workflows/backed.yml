@@ -1,4 +1,4 @@
-name: backed
+name: backed-action
 
 on:
   issue_comment:
@@ -17,7 +17,7 @@ concurrency:
   group: backed-${{ github.event.issue.number || github.event.pull_request.number }}
 
 jobs:
-  backed:
+  evaluate:
     if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:

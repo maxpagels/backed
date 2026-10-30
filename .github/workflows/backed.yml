@@ -1,0 +1,33 @@
+name: backed
+
+on:
+  issue_comment:
+    types: [created, edited]
+  # pull_request_target so fork PRs get a write token; safe only because the PR's code is never checked out.
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: backed-${{ github.event.issue.number || github.event.pull_request.number }}
+
+jobs:
+  backed:
+    if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      # Checks out the default branch, never the PR head.
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node backed-action.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Must match the host the enrollment/signing page is served from (GitHub Pages by default).
+          BACKED_RP_ID: ${{ github.repository_owner }}.github.io

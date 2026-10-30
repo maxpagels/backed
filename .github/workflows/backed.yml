@@ -29,5 +29,5 @@ jobs:
       - run: node backed-action.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Must match the host the enrollment/signing page is served from (GitHub Pages by default).
-          BACKED_RP_ID: ${{ github.repository_owner }}.github.io
+          # The enrollment/signing page (GitHub Pages by default). Its host is the WebAuthn RP ID, so keys only verify for it.
+          BACKED_PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/

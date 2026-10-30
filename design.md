@@ -179,6 +179,8 @@ A spike in this repo (`index.html`, `verify-attestation.js`, `backed-action.js`)
 - Chrome passes the YubiKey's `packed` attestation through unchanged, with its attestation certificate. Browser enrollment is enough for the full hardware tier, so the CLI isn't required to join.
 - Current YubiKeys chain through two intermediates to Yubico Attestation Root 1 (older ones chain directly to the U2F root). The verifier walks a chain of any length and bundles Yubico's published roots and intermediates. A real YubiKey enrollment passed every check, including the chain to a Yubico root.
 - Phase 1 needs no hosted service. A GitHub Action reads a signature bundle from a PR comment, checks that it names this repo, PR and head commit, verifies it against a keys file in the repo, and sets a `backed` status and label. The keys file stands in for the ledger and stores each key's attestation, so anyone can re-verify it. GitHub Pages serves the signing page, which fixes the relying-party ID to `<owner>.github.io` for the pilot.
+- Account binding without OAuth or gists: a key counts for an account only if a merged PR opened by that account (matched on numeric account ID, not login) added the key to the keys file. GitHub has already authenticated the PR author, so this is the cheapest proof that the account consents. A key-signed binding statement (Enrollment step 3) would still guard against a maintainer swapping keys inside a contributor's PR.
+- The Action keeps one status comment per PR with a signing link prefilled with repo, PR and head SHA, which removes the copy-the-SHA step that caused the first failed test.
 - `pull_request_target` gives fork PRs a write token, which the Action needs for labels and statuses. It's safe only because the Action never checks out the PR's code. The hosted App avoids this constraint, and the pilot has to keep it.
 
 ## Rollout, success metrics and open questions
@@ -214,5 +216,5 @@ If Gate 1 fails, backing doesn't predict quality and the project should stop bef
 - How should reputation treat forks and mirrors of the same project?
 - Would GitHub or GitLab accept the attestation as a first-class signal, and what format would they need?
 - Do Safari and Firefox pass `packed` attestation through for security keys, as Chrome does?
-- Copying a bundle into a PR comment is clunky. Should the page prefill repo, PR and head SHA from a link the Action posts, or should Phase 1 wait for `gh backed sign`?
+- Pasting the bundle into a comment is still a manual step. Is that acceptable for the pilot, or should Phase 1 wait for `gh backed sign` to post it?
 - Should verification use the FIDO Metadata Service for all vendors from the start, or bundled vendor roots (Yubico only, as in the spike) until the pilot?

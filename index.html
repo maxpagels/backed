@@ -12,7 +12,10 @@
 <p>Enroll a security key, sign a PR statement with a touch, and verify the signature in the page. See <code>README.md</code>.</p>
 
 <h2>1. Enroll</h2>
+<label for="login">Your GitHub login</label>
+<input id="login" autocomplete="username">
 <button id="enroll">Enroll key</button>
+<p>Add the output to <code>.github/backed-keys.json</code> in a PR opened from that GitHub account. Keys added any other way are ignored.</p>
 <pre id="enrollOut" aria-live="polite"></pre>
 
 <h2>2. Sign</h2>
@@ -34,14 +37,19 @@ const $ = id => document.getElementById(id);
 const storedKey = () => JSON.parse(localStorage.getItem('backedEnrollment') ?? 'null') ?? (() => { throw Error('enroll a key first'); })();
 const here = { rpId: location.hostname, origin: location.origin };
 
+// The Action links here with ?repo=&pr=&sha= so the statement is prefilled for the PR's current head.
+const q = new URLSearchParams(location.search);
 $('stmt').value = JSON.stringify({
-  v: 1, repo: 'owner/name', pr: 1234, head_sha: 'full 40-character commit SHA of the PR head',
+  v: 1, repo: q.get('repo') ?? 'owner/name', pr: Number(q.get('pr') ?? 1234), head_sha: q.get('sha') ?? 'full 40-character commit SHA of the PR head',
   statement: STATEMENT_V1,
   ai_use: 'assisted', signed_at: new Date().toISOString(),
 }, null, 2);
 
 $('enroll').onclick = async () => {
   try {
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent($('login').value.trim())}`);
+    if (!res.ok) throw Error(`GitHub login not found (${res.status})`);
+    const user = await res.json();
     const cred = await navigator.credentials.create({ publicKey: {
       rp: { name: 'Backed' }, // rp.id defaults to this page's hostname
       user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'backed', displayName: 'Backed' },
@@ -55,6 +63,8 @@ $('enroll').onclick = async () => {
     const att = cbor(new Uint8Array(cred.response.attestationObject));
     // This is the enrollment record: verify-attestation.js checks it, and .github/backed-keys.json stores it.
     const enrollment = {
+      github: user.login,
+      github_id: user.id, // the binding uses the numeric ID, since logins can be renamed and reused
       credentialId: cred.id,
       publicKey: b64u(cred.response.getPublicKey()),
       attestationFormat: att.fmt,
